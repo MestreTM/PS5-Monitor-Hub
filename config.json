@@ -16,6 +16,5 @@
         "mqtt_user": "ps5_script",
         "mqtt_pass": "123456",
         "mqtt_topic": "homeassistant/sensor/ps5_custom/state"
-    },
-    "plugins": {}
+    }
 }
