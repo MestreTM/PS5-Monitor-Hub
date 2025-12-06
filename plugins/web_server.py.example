@@ -1,0 +1,115 @@
+from app.plugin_sdk import PluginBase
+from app.utils import Logger
+import threading
+import json
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+SERVER_STATE = {
+    "status": "Offline",
+    "game": {},
+    "stats": {}
+}
+
+class StatusHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/api':
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps(SERVER_STATE).encode('utf-8'))
+            return
+
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html; charset=utf-8')
+        self.end_headers()
+        
+        game_img = SERVER_STATE.get("game", {}).get("image", "")
+        img_html = f'<img src="{game_img}" width="200">' if game_img.startswith('http') else ''
+
+        html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>PS5 Status Monitor</title>
+            <meta http-equiv="refresh" content="5">
+            <style>
+                body {{ font-family: sans-serif; background: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }}
+                .card {{ background: #1e1e1e; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; width: 350px; }}
+                .status {{ font-weight: bold; color: #4cc2ff; margin-bottom: 10px; }}
+                .game {{ font-size: 24px; margin: 15px 0; }}
+                .stats {{ font-size: 14px; color: #888; margin-top: 20px; }}
+                img {{ border-radius: 10px; margin-top: 15px; max-width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }}
+            </style>
+        </head>
+        <body>
+            <div class="card">
+                <div class="status">STATUS: {SERVER_STATE.get('status')}</div>
+                <div class="game">{SERVER_STATE.get('game', {}).get('name', 'None')}</div>
+                {img_html}
+                <div class="stats">
+                    CPU: {SERVER_STATE.get('stats', {}).get('cpu_temp', 'N/A')} | 
+                    SoC: {SERVER_STATE.get('stats', {}).get('soc_temp', 'N/A')}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        self.wfile.write(html.encode('utf-8'))
+
+    def log_message(self, format, *args):
+        return # Silence console logs for requests
+
+class Plugin(PluginBase):
+    def __init__(self):
+        super().__init__()
+        self.server = None
+        self.server_thread = None
+
+    def get_manifest(self):
+        return {
+            "name": "Web Dashboard",
+            "id": "web_server",
+            "description": "Hosts a local web page with PS5 status",
+            "fields": [
+                {"key": "port", "label": "Port", "type": "text", "default": "8080"}
+            ]
+        }
+
+    def on_load(self, config):
+        self.config = config
+        self.enabled = self.config.get("enabled", False)
+        
+        self.stop_server()
+
+        if self.enabled:
+            port = int(self.config.get("port", 8080))
+            self.start_server(port)
+
+    def on_update(self, data):
+        if not self.enabled: return
+        global SERVER_STATE
+        SERVER_STATE = data
+
+    def on_unload(self):
+        self.stop_server()
+
+    def start_server(self, port):
+        try:
+            self.server = HTTPServer(('0.0.0.0', port), StatusHandler)
+            self.server_thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+            self.server_thread.start()
+            Logger.log(f"Web Dashboard started at http://localhost:{port}")
+        except Exception as e:
+            Logger.log(f"Error starting Web Server: {e}")
+
+    def stop_server(self):
+        if self.server:
+            try:
+                self.server.shutdown()
+                self.server.server_close()
+                Logger.log("Web Dashboard stopped.")
+            except Exception as e:
+                Logger.log(f"Error stopping server: {e}")
+            finally:
+                self.server = None

@@ -1,0 +1,46 @@
+from app.plugin_sdk import PluginBase
+from app.utils import Logger
+import threading
+
+# DO NOT import plyer here directly if you want auto-install to work seamlessly on first run.
+# Or wrap in try/except.
+
+class Plugin(PluginBase):
+    def __init__(self):
+        super().__init__()
+        self.last_status = None
+
+    def get_manifest(self):
+        return {
+            "name": "Desktop Notify",
+            "id": "desktop_notify",
+            "description": "Show Windows Toast notification",
+            "requirements": ["plyer"],
+            "fields": [
+                {"key": "show_cpu", "label": "Show Temp", "type": "checkbox", "default": True}
+            ]
+        }
+
+    def on_update(self, data):
+        if not self.enabled: return
+        
+        # Safe import (only happens after installation)
+        try:
+            from plyer import notification
+        except ImportError:
+            Logger.log("Plyer not installed yet.")
+            return
+
+        status = data.get("status")
+        game = data.get("game", {}).get("name", "None")
+
+        if status != self.last_status:
+            self.last_status = status
+            if status == "Offline": return
+            
+            threading.Thread(target=self._send, args=(notification, status, game)).start()
+
+    def _send(self, notif_lib, title, msg):
+        try:
+            notif_lib.notify(title=f"PS5: {title}", message=msg, app_name="PS5 Monitor", timeout=5)
+        except: pass

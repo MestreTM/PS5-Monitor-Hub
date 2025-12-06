@@ -1,0 +1,21 @@
+{
+    "general": {
+        "ps5_ip": "192.168.10.7",
+        "klog_port": 9081,
+        "stats_port": 1214,
+        "language": "en"
+    },
+    "discord": {
+        "enabled": true,
+        "client_id": ""
+    },
+    "haos": {
+        "enabled": true,
+        "mqtt_broker": "homeassistant.local",
+        "mqtt_port": 1883,
+        "mqtt_user": "ps5_script",
+        "mqtt_pass": "123456",
+        "mqtt_topic": "homeassistant/sensor/ps5_custom/state"
+    },
+    "plugins": {}
+}

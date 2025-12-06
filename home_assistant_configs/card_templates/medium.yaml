@@ -1,0 +1,203 @@
+type: custom:button-card
+entity: sensor.ps5_status
+show_name: false
+show_icon: false
+aspect_ratio: 2/1
+tap_action:
+  action: none
+styles:
+  card:
+    - border-radius: 20px
+    - overflow: hidden
+    - padding: 0px
+    - box-shadow: 0px 10px 30px rgba(0,0,0,0.6)
+    - border: 1px solid rgba(255,255,255,0.15)
+    - transition: all 0.3s ease
+    - position: relative
+    - background-image: |
+        [[[
+          var bg_entity = states['sensor.ps5_background_image'];
+          var bg = bg_entity ? bg_entity.state : null;
+          var status = states['sensor.ps5_status'] ? states['sensor.ps5_status'].state : 'Offline';
+          
+          var overlay_dark = 'linear-gradient(to right, rgba(15,15,15,0.95) 0%, rgba(15,15,15,0.8) 40%, rgba(15,15,15,0.2) 100%)';
+          
+          if (status == 'Online' && !bg) {
+              return `linear-gradient(to right, rgba(15,15,15,0.95) 0%, rgba(15,15,15,0.6) 40%, rgba(15,15,15,0.2) 100%), url("https://i.imgur.com/8crMduz.gif")`;
+          }
+
+          if ((status == 'Playing' || status == 'Online') && bg && bg.startsWith('http')) {
+            return `${overlay_dark}, url("${bg}")`;
+          }
+          
+          return 'linear-gradient(135deg, #1a1a1a 0%, #2c3e50 100%)';
+        ]]]
+    - background-size: 100% 105%, cover
+    - background-position: center center
+    - background-repeat: no-repeat
+  grid:
+    - grid-template-areas: "\"icon info\" \"icon stats\""
+    - grid-template-columns: min-content 1fr
+    - grid-template-rows: 1fr min-content
+    - padding: 20px
+    - column-gap: 20px
+    - position: relative
+    - z-index: 1
+  custom_fields:
+    icon:
+      - width: 90px
+      - height: 90px
+      - display: block
+      - align-self: center
+      - justify-self: start
+    info:
+      - align-self: center
+      - justify-self: start
+      - text-align: left
+    stats:
+      - align-self: end
+      - justify-self: start
+      - padding-top: 5px 
+custom_fields:
+  icon: |
+    [[[
+      var img_entity = states['sensor.ps5_cover_image'];
+      var img = img_entity ? img_entity.state : null;
+      var status = states['sensor.ps5_status'] ? states['sensor.ps5_status'].state : 'Offline';
+      
+      if (status == 'Offline' || status == 'Idle' || !img || !img.startsWith('http')) {
+        return `<div style="
+          width: 97%; height: 97%;
+          background: linear-gradient(135deg, #2b2b2b 0%, #404040 100%);
+          border-radius: 18px;
+          display: flex; align-items: center; justify-content: center;
+          border: 1px solid rgba(255,255,255,0.1);">
+          <ha-icon icon="mdi:sony-playstation" style="color: white; width: 60px; height: 60px; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));"></ha-icon>
+        </div>`;
+      }
+      
+      return `<img src="${img}" style="
+        width: 97%; height: 97%;
+        border-radius: 18px;
+        object-fit: cover;
+        border: 1px solid rgba(255,255,255,0.15);
+      ">`;
+    ]]]
+  info: |
+    [[[
+      var game_entity = states['sensor.ps5_current_game'];
+      var game = game_entity ? game_entity.state : 'Unknown';
+      var status = states['sensor.ps5_status'] ? states['sensor.ps5_status'].state : 'Offline';
+      var start_time_entity = states['sensor.ps5_session_start'];
+      
+      var title = (game && game != 'Nenhum' && game != 'unknown') ? game : 'PlayStation 5';
+      
+      var color = '#777'; 
+      if (status == 'Playing') color = '#00DFA2'; 
+      if (status == 'Online') color = '#007AFF';
+      if (status == 'Offline') color = '#FF3B30'; 
+      
+      var time_display = '';
+      if ((status == 'Playing' || status == 'Online') && start_time_entity && start_time_entity.state) {
+          var start_ts = parseInt(start_time_entity.state);
+          if (!isNaN(start_ts)) {
+            var now = Math.floor(Date.now() / 1000);
+            var diff = now - start_ts;
+            
+            if (diff > 0) {
+              var hours = Math.floor(diff / 3600);
+              var minutes = Math.floor((diff % 3600) / 60);
+              var h_str = hours > 0 ? `${hours}h ` : '';
+              time_display = `• ${h_str}${minutes}m`;
+            }
+          }
+      }
+
+      return `
+        <div style="font-family: 'Roboto', sans-serif;">
+          <div style="
+            display: inline-flex;
+            align-items: center;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            border: 1px solid ${color};
+            color: ${color};
+            font-size: 11px;
+            font-weight: 900;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+          ">
+            <span style="background-color: ${color}; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 5px ${color};"></span>
+            ${status}
+          </div>
+          
+          <div style="
+            color: white;
+            font-size: 22px;
+            font-weight: 800;
+            line-height: 1.1em;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            margin-bottom: 4px;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+          ">
+            ${title}
+          </div>
+          
+          <div style="color: rgba(255,255,255,0.6); font-size: 13px; font-weight: 500;">
+              ${status == 'Playing' ? 'Playing' : 'In System'} ${time_display}
+          </div>
+        </div>
+      `;
+    ]]]
+  stats: |
+    [[[
+      var cpu_temp_entity = states['sensor.ps5_cpu_temperature'];
+      var soc_temp_entity = states['sensor.ps5_soc_temperature'];
+      var freq_entity = states['sensor.ps5_cpu_frequency'];
+      
+      var cpu_temp = cpu_temp_entity ? cpu_temp_entity.state : null;
+      var soc_temp = soc_temp_entity ? soc_temp_entity.state : null;
+      var freq = freq_entity ? freq_entity.state : null;
+      
+      var stats_html = '';
+      
+      function render_stat(value, icon, color) {
+          if (value && value != 'N/A' && value != 'Offline/API Down' && value != 'Error' && value != 'unknown') {
+              var is_warning = false;
+              if (value.includes('°C')) {
+                  var tempVal = parseInt(value.replace(/\D/g, ''));
+                  if (tempVal > 70) is_warning = true;
+              }
+              var block_color = is_warning ? '#FF9500' : color;
+              
+              return `
+                  <div style="display: flex; align-items: center; margin-right: 15px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 8px;">
+                      <ha-icon icon="${icon}" style="width: 16px; height: 16px; color: ${block_color}; margin-right: 5px;"></ha-icon>
+                      <span>${value}</span>
+                  </div>
+              `;
+          }
+          return '';
+      }
+
+      stats_html += render_stat(cpu_temp, 'mdi:cpu-64-bit', '#FF3B30');
+      stats_html += render_stat(soc_temp, 'mdi:expansion-card', '#007AFF');
+      stats_html += render_stat(freq, 'mdi:speedometer-medium', '#00DFA2');
+      if (stats_html === '') return '';
+
+      return `
+        <div style="
+          display: flex; 
+          flex-direction: row; 
+          color: rgba(255,255,255,0.9); 
+          font-size: 12px; 
+          font-family: monospace; 
+          font-weight: bold;
+        ">
+          ${stats_html}
+        </div>
+      `;
+    ]]]

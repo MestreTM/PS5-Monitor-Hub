@@ -1,0 +1,9 @@
+customtkinter
+pystray
+Pillow
+pypresence
+paho-mqtt
+playwright
+beautifulsoup4
+httpx
+requests

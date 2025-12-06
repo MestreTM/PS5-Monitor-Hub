@@ -1,0 +1,46 @@
+mqtt:
+  sensor:
+    - name: "PS5 Status"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.status }}"
+      json_attributes_topic: "homeassistant/sensor/ps5_custom/state"
+      icon: "mdi:sony-playstation"
+
+    - name: "PS5 Current Game"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.game_name }}"
+      icon: "mdi:gamepad-variant"
+
+    - name: "PS5 Cover Image"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.image }}"
+    
+    - name: "PS5 Background Image"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.background }}"
+      
+    - name: "PS5 CPU Temperature"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.cpu_temp }}"
+      icon: "mdi:thermometer-cpu"
+      
+    - name: "PS5 SoC Temperature"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.soc_temp }}"
+      icon: "mdi:thermometer-lines"
+      
+    - name: "PS5 CPU Frequency"
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: "{{ value_json.frequency }}"
+      icon: "mdi:speedometer-medium"
+      
+    - name: "PS5 Session Start"
+      unique_id: ps5_session_start_timestamp
+      state_topic: "homeassistant/sensor/ps5_custom/state"
+      value_template: >-
+        {% if value_json.start_timestamp is defined and value_json.start_timestamp != None %}
+          {{ value_json.start_timestamp }}
+        {% else %}
+          0
+        {% endif %}
+      icon: "mdi:clock-start"
