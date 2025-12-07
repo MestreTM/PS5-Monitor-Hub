@@ -6,6 +6,8 @@ real-time game activity via **Discord Rich Presence (KLOG/EtaHen)** and
 features a modular **Plugin System** for custom IoT, Home Assistant, and
 monitoring integrations.
 
+### ⚠️ Warning: For temperature and frequency statuses in HAOS, install [AirPSX](https://github.com/barisyild/airpsx/) and activate on your PS5 JB.
+
 ------------------------------------------------------------------------
 
 ## 🚀 Key Features
