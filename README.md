@@ -142,6 +142,6 @@ Reload plugins instantly through the GUI.
 ## 📦 Building as EXE (optional)
 
 ``` bash
-pyinstaller --noconsole --onefile --clean --name "PS5 Monitor Hub" --icon=icon.ico --add-data
+pyinstaller --noconsole --onefile --clean --name "PS5 Monitor Hub" --icon=icon.ico main.py
 ```
 
